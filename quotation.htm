@@ -1,0 +1,203 @@
+<html>
+<head>
+    <title>Quotation test</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="clarityapi.js"></script>
+<script>
+    var apiClient = clarityApiFactory.createClient('quotations');
+    $(document).ready(function () {
+        apiClient.objectIdField = document.getElementById('objectId');
+        apiClient.processReturnedObject = function (data) {
+            if (this.objectIdField != null) {
+                var d;
+                if (data instanceof Array) {
+                    d = data[0];
+                }
+                else {
+                    d = data;
+                }
+                if (d != null) {
+                    var dId = d.QuotationId;
+                    if (dId != null) {
+                        this.objectIdField.value = dId;
+                    }
+                }
+            }
+        };
+    });
+        
+
+    function getFieldValues() {
+        var values = $("#create :input[value!='']").serializeArray();
+        if (values.length == 0) {
+            alert('Please enter some values!');
+            return null;
+        }
+        return values;
+    }
+    
+function doCreate()
+{
+    
+    var fieldValues = getFieldValues();
+    if (fieldValues != null) {
+        apiClient.doCreate(fieldValues,
+                function (data) { alert('completed with ' + JSON.stringify(data)); },
+                function (err) { alert(err); });
+    }
+}
+function doCreateFail() {
+    apiClient.doCreate(null,
+         function (data) { alert('completed with ' + JSON.stringify(data)); },
+         function (err) { alert(err); });
+
+}
+function getObjectIdValue() {
+    if (apiClient == null || apiClient.objectIdField == null) {
+        alert('Api client not initialized');
+        return null;
+    }
+    if (apiClient.objectIdField.value == '') {
+        apiClient.objectIdField.focus();
+        alert('enter a value or click Query to get one');
+        return null;
+    }
+    return apiClient.objectIdField.value;
+}
+function doUpdate() {
+    var id = getObjectIdValue();
+    if (id != null) {
+        var values = getFieldValues();
+        if (values != null) {
+            apiClient.doUpdate(id, values,
+               function (data) { alert('completed with ' + JSON.stringify(data)); },
+               function (err) { alert(err); });
+        }
+    }
+}
+function doDelete() {
+    var id = getObjectIdValue();
+    if (id != null) {
+        apiClient.doDelete(id,
+           function (data) { alert('completed with ' + JSON.stringify(data)); },
+           function (err) { alert('Error! ' +err); });
+    }
+}
+function doQueryByTitle() {
+    var form = $('#create')[0];
+    if (form.QuoteNumber.value == '') {
+        form.QuoteNumber.focus();
+        alert('Enter Quote Number');
+        return;
+    }
+    var oDataQuery = 'filter=' + encodeURI('QuoteNumber eq \'' + encodeURI(form.QuoteNumber.value) + '\'');
+    apiClient.oQuery(oDataQuery,
+            function (data) { alert('check completed with ' + JSON.stringify(data)); },
+            function (err) { alert('error!' + err); });
+}
+</script>
+</head>
+<body>
+    <form id="create">
+    Create Quotation with
+    <table><tr><td>Quote Number:</td><td>
+        
+        <input type="text"  name="QuoteNumber" value="test" />
+                                   </td></tr>
+        <tr><td>Description:</td><td><input type="text" name="Description" value="required description" /></td></tr>
+        <tr><td>Quote date:</td><td><input type="text" name="QuoteDate" value="2013-11-30" /></td></tr>
+        <tr><td>Status:</td><td><input type="text" name="Status" value="Active" /></td></tr>
+        <tr><td>Amount:</td><td><input type="text" name="SubTotal" value="101.11" /></td></tr>
+        <tr><td>Shipping &amp; Handling:</td><td><input type="text" name="SH" value="19.99" /></td></tr>
+        <tr><td>Contact ID:</td><td><input type="text" name="ContactID" value="99E90284-2BAF-47A3-A576-5251A35FFB56" /></td></tr>
+        <tr><td>Account ID:</td><td><input type="text" name="AccountID" value="A95FEE0B-4338-4467-A58F-71DED99C37BA" /></td></tr>
+        
+        <tr><td>Custom field (my text field) :</td><td>
+            <input type="hidden" name="CustomFields[0].FieldName" value="My Text Field" />
+            <input type="text" name="CustomFields[0].FieldValue" value="aa some value" />
+            
+        </td></tr>
+        <tr><td>Custom field (my number field) :</td>
+            <td>
+            <input type="hidden" name="CustomFields[1].FieldName" value="My Number Field" />
+            <input type="text" name='CustomFields[1].FieldValue' value="123.11" />
+            </td>
+
+        </tr>
+        <tr><td>Custom field (my date field) :</td><td>
+            <input type="hidden" name="CustomFields[2].FieldName" value="My Date Field" />
+            <input type="text" name="CustomFields[2].FieldValue" value="2013-12-28" />
+
+                                                   </td></tr>
+                <tr><td>Document line 1:</td><td>
+                    Line
+            <input type="text" name="Lines[0].LineIndex" value="1" />
+                    </td>
+                    <td>
+                    id:
+                    <input type="text" name="Lines[0].ItemId" value="" />
+                        </td>
+                    <td>
+                    product
+            <input type="text" name="Lines[0].ItemName" value="my product" />
+                                                   </td>
+                    <td>
+                        ListPrice
+                        <input type="text" name="Lines[0].ListPrice" value="10.23" />
+                    </td>
+                    <td>
+                        Qty
+                        <input type="text" name="Lines[0].Quantity" value="2" />
+                    </td>
+                    <td>
+                        Description
+                        <input type="text" name="Lines[0].Description" value="some product's description"  />
+                    </td>
+                </tr>
+
+        <tr><td>Document line 2:</td><td>
+                    Line
+            <input type="text" name="Lines[1].LineIndex" value="1" />
+                    </td>
+                    <td>
+                    id:
+                    <input type="text" name="Lines[1].ItemId" value="" />
+                        </td>
+                    <td>
+                    product
+            <input type="text" name="Lines[1].ItemName" value="my product" />
+                                                   </td>
+                    <td>
+                        ListPrice
+                        <input type="text" name="Lines[1].ListPrice" value="10.23" />
+                    </td>
+                    <td>
+                        Qty
+                        <input type="text" name="Lines[1].Quantity" value="2" />
+                    </td>
+                                <td>
+                        Description
+                        <input type="text" name="Lines[1].Description" value="some product's description"  />
+                    </td>
+
+                </tr>
+        
+    </table>
+    
+        <input type="button" value="Create Quotation" onclick="doCreate();"/>
+        <br />
+        <input type="button" value="Attempt to create Quotation and fail" onclick="doCreateFail();"/>
+        </form>
+    <br />
+<input type="button" value="Query OData Quotation provider for objects satisfying Quote Number value" onclick="doQueryByTitle();"/>
+    <br />
+    <table>
+        <tr><td>ID of object (filled with any request that returns objects)</td>
+           <td> <input type="text"  id="objectId" /></td>
+
+        </tr>
+        <tr><td><input type="button" value="Update Quotation" onclick="doUpdate();" /></td></tr>
+        <tr><td><input type="button" value="Delete Quotation" onclick="doDelete();" /></td></tr>
+    </table>
+</body>
+</html>

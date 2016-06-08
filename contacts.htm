@@ -1,0 +1,226 @@
+<html>
+<head>
+    <title>Contacts test</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="clarityapi.js"></script>
+<script>
+    var apiClient = clarityApiFactory.createApiClient('http://api.claritysfa.com/api/contacts', 'API_KEY');
+    var activityApi = clarityApiFactory.createApiClient('http://api.claritysfa.com/api/activities', 'API_KEY');
+    $(document).ready(function () {
+        apiClient.objectIdField = document.getElementById('objectId');
+        apiClient.processReturnedObject = function (data) {
+            if (this.objectIdField != null) {
+                var d;
+                if (data instanceof Array) {
+                    d = data[0];
+                }
+                else {
+                    d = data;
+                }
+                if (d != null) {
+                    var dId = d.ContactId;
+                    if (dId != null) {
+                        this.objectIdField.value = dId;
+                    }
+                }
+            }
+        };
+    });
+    function fillActivityTypeID() {
+        activityApi.oQuerySub('ActivityTypes', 'select=ActivityTypeID,Name&orderby=order&filter=' + encodeURI('Enabled eq true'),
+                function (data) {
+                    var cmb = $('#cmbActivityTypeID');
+                    cmb.empty();
+                    $.each(data, function (idx, t) {
+                        cmb.append($("<option/>", { value: t.ActivityTypeId, text: t.Name }));
+                    });
+                },
+                function (err) { alert(err); });
+        
+        
+    }
+    function getFieldValuesFromForm(frmId) {
+        var id = frmId + ' :input[value!=\'\']';
+        var values = $(id).serializeArray();
+        if (values.length == 0) {
+            alert('Please enter some values!');
+            return null;
+        }
+        return values;
+    }
+    function getFieldValues() {
+        return getFieldValuesFromForm('#create');
+    }
+    function doCreateActivity() {
+        
+        var cmb = $('#cmbActivityTypeID');
+        if (cmb.val() == cmb.text()) {
+            alert('Fill activity types');
+            return;
+        }
+        
+
+        var form = $('#activity')[0];
+        form.ActivityTypeId.value = cmb.val();
+        form.ContactId.value = $('#objectId').val();
+        alert(form.ContactId.value);
+        if (form.ContactId.value == '') {
+            alert('Fill ContactID');
+            return;
+        }
+        var fieldValues = getFieldValuesFromForm('#activity');
+        alert(JSON.stringify(fieldValues));
+        if (fieldValues != null) {
+            activityApi.doCreate(fieldValues,
+                    function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+                    function (err) { alert(err); });
+        }
+    }
+    function doCreate() {
+        var form = $('#create')[0];
+        if (form.FirstName.value == '' && form.LastName.value=='') {
+            form.FirstName.focus();
+            alert('Enter name');
+            return;
+        }
+        var fieldValues = getFieldValues();
+        if (fieldValues != null) {
+            apiClient.doCreate(fieldValues,
+                    function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+                    function (err) { alert(err); });
+        }
+    }
+    function doCheckEmail() {
+        var form = $('#create')[0];
+        var checkVal = form.Email.value;
+        if (checkVal == '') {
+            form.Email.focus();
+            alert('Enter value');
+            return;
+        }
+
+
+        apiClient.doExec('/checkEmail?email=' + encodeURI(checkVal), 'GET', '',
+                function (data) { alert('check completed with ' + JSON.stringify(data)); },
+                function (err) { alert(err); });
+
+
+    }
+    function doQueryByEmail() {
+        var form = $('#create')[0];
+        var checkVal = form.Email.value;
+        if (checkVal == '') {
+            form.Name.focus();
+            alert('Enter value');
+            return;
+        }
+        var oDataQuery = 'filter=' + encodeURI('Email eq \'' + checkVal + '\'');
+        apiClient.oQuery(oDataQuery,
+                function (data) { alert('check completed with ' + JSON.stringify(data)); },
+                function (err) { alert(err); });
+    }
+    function getObjectIdValue() {
+        if (apiClient == null || apiClient.objectIdField == null) {
+            alert('Api client not initialized');
+            return null;
+        }
+        if (apiClient.objectIdField.value == '') {
+            apiClient.objectIdField.focus();
+            alert('enter a value or click Query to get one');
+            return null;
+        }
+        return apiClient.objectIdField.value;
+    }
+    function doUpdate() {
+        var id = getObjectIdValue();
+        if (id != null) {
+            apiClient.doUpdate(id, $('#create').serializeArray(),
+               function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+               function (err) { alert(err); });
+        }
+    }
+    function doDelete() {
+        var id = getObjectIdValue();
+        if (id != null) {
+            apiClient.doDelete(id,
+               function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+               function (err) { alert(err); });
+        }
+    }
+</script>
+</head>
+<body>
+    <form id="create">
+	<font color="white"><h2 style="background-color:blue;">ClaritySoft API Example to Create Contact</h2></font>
+    <table><tr><td>First Name:</td><td>
+        
+        <input type="text"  name="FirstName" value="fName" />
+                                   </td></tr>
+        <tr><td>Last Name:</td><td><input type="text" name="LastName" value="last" /></td></tr>
+        <tr><td>Email:</td><td><input type="text" name="Email" value="aa@x.com" /></td></tr>
+        <tr><td>Phone:</td><td><input type="text" name="CompanyPhone" value="111-22-33" /></td></tr>
+        <tr><td>Account ID:</td><td><input type="text" name="AccountId" /></td></tr>
+        <tr><td>Lead ID:</td><td><input type="text" name="LeadId" /></td></tr>
+        <tr><td>Custom field (my text field) :</td><td>
+            <input type="hidden" name="CustomFields[0].FieldName" value="My Text Field" />
+            <input type="text" name="CustomFields[0].FieldValue" value="aa some value" />
+            
+        </td></tr>
+        <tr><td>Custom field (my number field) :</td>
+            <td>
+            <input type="hidden" name="CustomFields[1].FieldName" value="My Number Field" />
+            <input type="text" name='CustomFields[1].FieldValue' value="123.11" />
+            </td>
+
+        </tr>
+        <tr><td>Custom field (my date field) :</td><td>
+            <input type="hidden" name="CustomFields[2].FieldName" value="My Date Field" />
+            <input type="text" name="CustomFields[2].FieldValue" value="2013-12-28" />
+
+                                                   </td></tr>
+        
+    </table>
+    
+        <input type="button" value="Create Contact" onclick="doCreate();"/>
+        </form>
+    <br />
+<input type="button" value="Test if name exists (scalar test)" onclick="doCheckEmail();"/>
+<input type="button" value="Query OData Contacts provider for objects satisfying email value" onclick="doQueryByEmail();"/>
+    <br />
+    <table>
+        <tr><td>ID of object (filled with any request that returns objects)</td>
+           <td> <input type="text"  id="objectId" /></td>
+
+        </tr>
+        <tr><td><input type="button" value="Update Contact" onclick="doUpdate();" /></td></tr>
+        <tr><td><input type="button" value="Delete Contact" onclick="doDelete();" /></td></tr>
+    </table>
+    <br />
+    <form id="activity">
+	<font color="white"><h2 style="background-color:blue;">ClaritySoft API Example to Create activity for a contact:</h2></font>
+        
+        <input type="button" value="Fill activity type id" onclick="fillActivityTypeID();" />
+        <input type="hidden" name="ContactId" />
+        <table>
+            
+            <tr><td>ActivityTypeId:</td><td><input type="hidden" name="ActivityTypeId" />
+                    <select id="cmbActivityTypeID" style="width:100%">
+                        <option>(Fill combo by pressing button above)</option>
+                    </select>
+
+                                        </td></tr>
+            <tr><td>Description:</td><td><input type="text" name="Description" /></td></tr>
+            <tr><td>Notes:</td><td><input type="text" name="Notes" /></td></tr>
+            <tr><td>Start Date:</td><td><input type="datetime" name="StartDate" /></td></tr>
+            <tr><td>Completed Date:</td><td><input type="datetime" name="CompletedDate" /></td></tr>
+            <tr><td>Status:</td><td><input type="text" name="Status" /></td></tr>
+            <tr><td>Used Coord:</td><td><input type="text" name="UsedCoord" /></td></tr>
+            <tr><td>Source Object ID:</td><td><input type="text" name="SourceObjectID" /></td></tr>
+            <tr><td>Source Object Type ID:</td><td><input type="text" name="SourceObjectTypeID" /></td></tr>
+            <tr><td>Case ID:</td><td><input type="text" name="CaseID" /></td></tr>
+            <tr><td><input type="button" value="Create activity" onclick="doCreateActivity();" /></td></tr>
+        </table>
+        </form>
+        
+</body>
+</html>

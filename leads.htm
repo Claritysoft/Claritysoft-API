@@ -1,0 +1,161 @@
+<html>
+<head>
+    <title>Leads test</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="clarityapi.js"></script>
+<script>
+    var leadApiClient =  clarityApiFactory.createApiClient('http://api.claritysfa.com/api/leads','API_KEY');
+    $(document).ready(function () {
+        leadApiClient.objectIdField = document.getElementById('objectId');
+        leadApiClient.processReturnedObject = function (data) {
+            if (this.objectIdField != null) {
+                var d;
+                if (data instanceof Array) {
+                    d = data[0];
+                }
+                else {
+                    d = data;
+                }
+                if (d != null) {
+                    var dId = d.LeadID;
+                    if (dId != null) {
+                        this.objectIdField.value = dId;
+                    }
+                }
+            }
+        };
+    });
+        
+
+    function getFieldValues() {
+        var values = $("#create :input[value!='']").serializeArray();
+        if (values.length == 0) {
+            alert('Please enter some values!');
+            return null;
+        }
+        return values;
+    }
+    
+function doCreate ()
+{
+    var form = $('#create')[0];
+    if (form.FirstName.value == '' && form.LastName.value == '') {
+        form.FirstName.focus();
+        alert('Enter first or last name');
+        return;
+    }
+    var fieldValues = getFieldValues();
+    if (fieldValues != null) {
+        leadApiClient.doCreate(fieldValues,
+                function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+                function (err) { alert(err); });
+    }
+}
+function doCheckEmail() {
+    var form = $('#create')[0];
+    var emailAddress = form.Email.value;
+    if (emailAddress == '') {
+        form.Email.focus();
+        alert('Enter email');
+        return;
+    }
+
+
+    leadApiClient.doExec('/checkEmail?email=' + encodeURI(emailAddress),'GET','',
+            function (data) { alert('check completed with ' + JSON.stringify(data)); },
+            function (err) { alert(err); });
+
+    
+}
+function doQueryByEmail() {
+    var form = $('#create')[0];
+    if (form.Email.value == '') {
+        form.Email.focus();
+        alert('Enter email');
+        return;
+    }
+    var oDataQuery = 'filter=' + encodeURI('Email eq \'' + form.Email.value + '\'');
+    leadApiClient.oQuery(oDataQuery,
+            function (data) { alert('check completed with ' + JSON.stringify(data)); },
+            function (err) { alert(err); });
+}
+function getObjectIdValue() {
+    if (leadApiClient == null || leadApiClient.objectIdField == null) {
+        alert('Api client not initialized');
+        return null;
+    }
+    if (leadApiClient.objectIdField.value == '') {
+        leadApiClient.objectIdField.focus();
+        alert('enter a value or click Query to get one');
+        return null;
+    }
+    return leadApiClient.objectIdField.value;
+}
+function doUpdate() {
+    var id = getObjectIdValue();
+    if (id != null) {
+        var values = getFieldValues();
+        if (values != null) {
+            leadApiClient.doUpdate(id, values,
+               function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+               function (err) { alert(err); });
+        }
+    }
+}
+function doDelete() {
+    var id = getObjectIdValue();
+    if (id != null) {
+        leadApiClient.doDelete(id,
+           function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+           function (err) { alert(err); });
+    }
+}
+</script>
+</head>
+<body>
+    <form id="create">
+    
+	<font color="white"><h2 style="background-color:blue;">ClaritySoft API Example to Create Lead</h2></font>
+    <table><tr><td>First Name:</td><td>
+        
+        <input type="text"  name="FirstName" value="fName" />
+                                   </td></tr>
+        <tr><td>Last Name:</td><td><input type="text" name="LastName" value="last" /></td></tr>
+        <tr><td>Email:</td><td><input type="text" name="Email" value="aa@x.com" /></td></tr>
+        
+        <tr><td>Custom field (my text field) :</td><td>
+            <input type="text" name="CustomFields[0].FieldName" value="My Text Field" />
+            <input type="text" name="CustomFields[0].FieldValue" value="aa some value" />
+            
+        </td></tr>
+        <tr><td>Custom field (my number field) :</td>
+            <td>
+            <input type="text" name="CustomFields[1].FieldName" value="My Number Field" />
+            <input type="text" name='CustomFields[1].FieldValue' value="123.11" />
+            </td>
+
+        </tr>
+        <tr><td>Custom field (my date field) :</td><td>
+            <input type="text" name="CustomFields[2].FieldName" value="My Date Field" />
+            <input type="text" name="CustomFields[2].FieldValue" value="2013-12-28" />
+
+                                                   </td></tr>
+        
+    </table>
+    
+        <input type="button" value="Create Lead" onclick="doCreate();"/>
+        </form>
+    <br />
+<input type="button" value="Test if email exists (scalar test)" onclick="doCheckEmail();"/>
+<input type="button" value="Query OData Leads provider for objects satisfying email value" onclick="doQueryByEmail();"/>
+    <br />
+    <table>
+        <tr><td>ID of object (filled with any request that returns objects)</td>
+           <td> <input type="text"  id="objectId" /></td>
+
+        </tr>
+        <tr><td><input type="button" value="Update Lead" onclick="doUpdate();" /></td></tr>
+        <tr><td><input type="button" value="Delete Lead" onclick="doDelete();" /></td></tr>
+    </table>
+</body>
+</html>

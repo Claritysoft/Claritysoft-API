@@ -1,0 +1,157 @@
+<html>
+<head>
+    <title>Accounts test</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="clarityapi.js"></script>
+<script>
+    var apiClient = clarityApiFactory.createApiClient('http://api.claritysfa.com/api/accounts', 'API_KEY');
+    $(document).ready(function () {
+        apiClient.objectIdField = document.getElementById('objectId');
+        apiClient.processReturnedObject = function (data) {
+            if (this.objectIdField != null) {
+                var d;
+                if (data instanceof Array) {
+                    d = data[0];
+                }
+                else {
+                    d = data;
+                }
+                if (d != null) {
+                    var dId = d.AccountId;
+                    if (dId != null) {
+                        this.objectIdField.value = dId;
+                    }
+                }
+            }
+        };
+    });
+
+    function getFieldValues() {
+        var values = $("#create :input[value!='']").serializeArray();
+        if (values.length == 0) {
+            alert('Please enter some values!');
+            return null;
+        }
+        return values;
+    }
+
+    function doCreate() {
+        var form = $('#create')[0];
+        if (form.Name.value == '') {
+            form.Name.focus();
+            alert('Enter name');
+            return;
+        }
+        var fieldValues = getFieldValues();
+        if (fieldValues != null) {
+            apiClient.doCreate(fieldValues,
+                    function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+                    function (err) { alert(err); });
+        }
+    }
+    function doCheckName() {
+        var form = $('#create')[0];
+        var checkVal = form.Name.value;
+        if (checkVal == '') {
+            form.Name.focus();
+            alert('Enter value');
+            return;
+        }
+
+
+        apiClient.doExec('/checkName?name=' + encodeURI(checkVal), 'GET', '',
+                function (data) { alert('check completed with ' + JSON.stringify(data)); },
+                function (err) { alert(err); });
+
+
+    }
+    function doQueryByName() {
+        var form = $('#create')[0];
+        var checkVal = form.Name.value;
+        if (checkVal == '') {
+            form.Name.focus();
+            alert('Enter value');
+            return;
+        }
+        var oDataQuery = 'filter=' + encodeURI('Name eq \'' + checkVal + '\'');
+        apiClient.oQuery(oDataQuery,
+                function (data) { alert('check completed with ' + JSON.stringify(data)); },
+                function (err) { alert(err); });
+    }
+    function getObjectIdValue() {
+        if (apiClient == null || apiClient.objectIdField == null) {
+            alert('Api client not initialized');
+            return null;
+        }
+        if (apiClient.objectIdField.value == '') {
+            apiClient.objectIdField.focus();
+            alert('enter a value or click Query to get one');
+            return null;
+        }
+        return apiClient.objectIdField.value;
+    }
+    function doUpdate() {
+        var id = getObjectIdValue();
+        if (id != null) {
+            apiClient.doUpdate(id, $('#create').serializeArray(),
+               function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+               function (err) { alert(err); });
+        }
+    }
+    function doDelete() {
+        var id = getObjectIdValue();
+        if (id != null) {
+            apiClient.doDelete(id,
+               function (data) { alert('POST completed with ' + JSON.stringify(data)); },
+               function (err) { alert(err); });
+        }
+    }
+</script>
+</head>
+<body>
+    <form id="create">
+    
+	<font color="white"><h2 style="background-color:blue;">ClaritySoft API Example to Create Account</h2></font>
+    <table><tr><td>Name:</td><td>
+        
+        <input type="text"  name="Name" value="test Account Name" />
+                                   </td></tr>
+        <tr><td>Phone:</td><td><input type="text" name="CompanyPhone" value="111-22-33" /></td></tr>
+        <tr><td>Website:</td><td><input type="text" name="Website" value="http://test.com" /></td></tr>
+        <tr><td>Owner Id:</td><td><input type="text" name="OwnerId" value="00000000-0000-0000-0000-0000000000AD" /></td></tr>
+        <tr><td>Custom field (my text field) :</td><td>
+            <input type="text" name="CustomFields[0].FieldName" value="My Text Field" />
+            <input type="text" name="CustomFields[0].FieldValue" value="aa some value" />
+            
+        </td></tr>
+        <tr><td>Custom field (my number field) :</td>
+            <td>
+            <input type="text" name="CustomFields[1].FieldName" value="My Number Field" />
+            <input type="text" name='CustomFields[1].FieldValue' value="123.11" />
+            </td>
+
+        </tr>
+        <tr><td>Custom field (my date field) :</td><td>
+            <input type="text" name="CustomFields[2].FieldName" value="My Date Field" />
+            <input type="text" name="CustomFields[2].FieldValue" value="2013-12-28" />
+
+                                                   </td></tr>
+        
+    </table>
+    
+        <input type="button" value="Create Account" onclick="doCreate();"/>
+        </form>
+    <br />
+<input type="button" value="Test if name exists (scalar test)" onclick="doCheckName();"/>
+<input type="button" value="Query OData Accounts provider for objects satisfying name value" onclick="doQueryByName();"/>
+    <br />
+    <table>
+        <tr><td>ID of object (filled with any request that returns objects)</td>
+           <td> <input type="text"  id="objectId" /></td>
+
+        </tr>
+        <tr><td><input type="button" value="Update Account" onclick="doUpdate();" /></td></tr>
+        <tr><td><input type="button" value="Delete Account" onclick="doDelete();" /></td></tr>
+    </table>
+</body>
+</html>
