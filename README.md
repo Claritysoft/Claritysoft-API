@@ -1,5 +1,5 @@
-# Claritysoft-API
-Claritysoft API Documentation
+# OBSOLETE Claritysoft-API
+OBSOLETE Claritysoft API Documentation
 
 ### Introduction
 
