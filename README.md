@@ -1,6 +1,9 @@
 # OBSOLETE Claritysoft-API
 OBSOLETE Claritysoft API Documentation
 
+Please check the current API documentation at
+http://liveapi.claritysoftcrm.com/help
+
 ### Introduction
 
 Claritysoft CRM provides an API (Application Programming Interface) to allow users to import data from their web site directly to Claritysoft. This will allow you to import leads from your web site, and work with them in Claritysoft. 
